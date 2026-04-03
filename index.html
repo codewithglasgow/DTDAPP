@@ -378,13 +378,31 @@ function formatDateRange(week) {
   const parts = week.startDate.split(" ");
   const startDay = parseInt(parts[0]);
   const startMonth = parts[1];
-  const year = parts[2];
+  const year = parseInt(parts[2]);
   
-  const endDate = new Date(year, {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11}[startMonth], startDay + 6);
-  const endDay = endDate.getDate();
-  const endMonth = endDate.toLocaleString('en-US', { month: 'short' });
+  const monthMap = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
   
-  return `${startDay}-${startMonth} to ${endDay}-${endMonth}`;
+  // The start date is Monday of the week
+  const mondayDate = new Date(year, monthMap[startMonth], startDay);
+  
+  // Sunday is 6 days before Monday? No - Sunday comes BEFORE Monday
+  // If Monday is the start, then Sunday is 1 day before Monday
+  // But your weeks run Sunday to Saturday, so Sunday is the FIRST day, Monday is SECOND day
+  // So the week start (Sunday) is Monday - 1 day
+  const sundayDate = new Date(mondayDate);
+  sundayDate.setDate(mondayDate.getDate() - 1);
+  
+  // Saturday is Sunday + 6 days
+  const saturdayDate = new Date(sundayDate);
+  saturdayDate.setDate(sundayDate.getDate() + 6);
+  
+  const formatDate = (date) => {
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    return `${day}-${month}`;
+  };
+  
+  return `${formatDate(sundayDate)} to ${formatDate(saturdayDate)}`;
 }
 
 // ========== BUILD DAY TO DAY TABLE ==========

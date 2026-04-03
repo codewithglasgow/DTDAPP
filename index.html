@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FSP SAGi • Day to Day Charts • Play Whe • Pick 2 • Pick 4</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg-start: #020617;
+      --bg-end: #1e293b;
+      --accent: #ff9d00;
+      --text-main: #ffffff;
+      --text-dim: #888888;
+      --card: rgba(255, 255, 255, 0.05);
+      --border-color: rgba(255,255,255,0.1);
+    }
+    
+    body.light-mode {
+      --bg-start: #ffffff;
+      --bg-end: #f2f2f2;
+      --text-main: #000000;
+      --text-dim: #444444;
+      --card: #ffffff;
+      --accent: #000000;
+      --border-color: #dddddd;
+    }
+    
+    body {
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding-bottom: 50px;
+    }
+    
+    /* Navigation Bar */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(2, 6, 23, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px 8px;
+      border: none;
+      border-radius: 12px;
+      background: var(--card);
+      color: var(--text-dim);
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    
+    .tab.active {
+      background: var(--accent);
+      color: #000;
+    }
+    
+    .theme-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    
+    .container {
+      padding: 15px;
+      display: none;
+    }
+    
+    .container.active {
+      display: block;
+    }
+    
+    /* Table Styles */
+    .table-wrapper {
+      margin-bottom: 20px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      background: var(--card);
+    }
+    
+    .table-header {
+      background: rgba(255,255,255,0.08);
+      padding: 12px;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    body.light-mode .table-header {
+      background: #e8e8e8;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th {
+      font-size: 11px;
+      color: var(--text-dim);
+      padding: 10px 4px;
+      font-weight: 600;
+    }
+    
+    td {
+      padding: 10px 4px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    
+    body.light-mode td {
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .current-day {
+      background: rgba(255, 157, 0, 0.15) !important;
+      color: var(--accent) !important;
+      font-weight: 800;
+    }
+    
+    .day-label {
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    /* Heat Grid */
+    .heat-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      padding: 12px;
+    }
+    
+    .heat-cell {
+      aspect-ratio: 1/1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    
+    .heat-cell:hover {
+      transform: scale(1.05);
+    }
+    
+    .heat-small {
+      font-size: 9px;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+    
+    /* Hit colors */
+    .hit-0 { background: #2a2a2a; color: #fff; }
+    body.light-mode .hit-0 { background: #e0e0e0; color: #000; }
+    .hit-1 { background: #ffd60a; color: #000; }
+    .hit-2 { background: #ff9f0a; color: #000; }
+    .hit-3 { background: #ff375f; color: #fff; }
+    .hit-4 { background: #5856d6; color: #fff; }
+    .hit-5 { background: #007aff; color: #fff; }
+    .hit-6 { background: #32d74b; color: #000; }
+    .hit-7plus { background: #bf5af2; color: #fff; }
+    
+    /* LS Chart */
+    .ls-table td {
+      font-size: 12px;
+      padding: 8px 4px;
+    }
+    .ls-label {
+      background: #00f2ff !important;
+      color: #000 !important;
+      width: 40px;
+      font-weight: 800;
+    }
+    .ls-count {
+      background: #ff375f33 !important;
+      color: #ff375f !important;
+      width: 50px;
+      font-weight: 800;
+    }
+    
+    .branding {
+      background: var(--accent);
+      color: #000;
+      text-align: center;
+      padding: 12px;
+      font-weight: 900;
+      font-size: 11px;
+      margin-top: 20px;
+    }
+    
+    .analysis-text {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 15px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    
+    @media (max-width: 768px) {
+      .nav-bar { padding: 8px 12px; }
+      .tab { font-size: 10px; padding: 8px 4px; }
+      td { font-size: 12px; padding: 6px 2px; }
+      .heat-cell { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="nav-bar">
+  <button class="tab active" onclick="switchTab('pw', this)">PLAY WHE<br>Day to Day Chart</button>
+  <button class="tab" onclick="switchTab('p2', this)">PICK 2<br>Day to Day Chart</button>
+  <button class="tab" onclick="switchTab('p4', this)">PICK 4<br>Day to Day Chart</button>
+  <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+</div>
+
+<div id="pw-tab" class="container active">
+  <div id="pw-content"></div>
+</div>
+
+<div id="p2-tab" class="container">
+  <div id="p2-content"></div>
+</div>
+
+<div id="p4-tab" class="container">
+  <div id="p4-content"></div>
+</div>
+
+<div class="branding" id="branding">© 2026 FSP SAGi • CODEWITHGLASGOW • Day to Day Charts</div>
+
+<!-- History Modals (same as before) -->
+<div id="historyModal-pw" class="history-modal">
+  <div class="modal-header"><div><h2>PLAY WHE DRAW CHART</h2><p id="modalDateRange-pw">Loading...</p></div>
+  <div class="modal-controls"><select id="modalWeekCount-pw" class="modal-select" onchange="renderExportTable('pw')">
+    <option value="4">Last 4 Weeks</option><option value="8" selected>Last 8 Weeks</option>
+    <option value="12">Last 12 Weeks</option><option value="16">Last 16 Weeks</option>
+    <option value="20">Last 20 Weeks</option><option value="24">Last 24 Weeks</option>
+    <option value="28">Last 28 Weeks</option><option value="32">Last 32 Weeks</option>
+    <option value="36">Last 36 Weeks</option><option value="40">Last 40 Weeks</option>
+    <option value="44">Last 44 Weeks</option><option value="48">Last 48 Weeks</option>
+    <option value="52">Last 52 Weeks</option><option value="56">Last 56 Weeks</option>
+    <option value="60">Last 60 Weeks</option><option value="64">Last 64 Weeks</option>
+    <option value="68">Last 68 Weeks</option><option value="72">Last 72 Weeks</option>
+    <option value="76">Last 76 Weeks</option><option value="80">Last 80 Weeks</option>
+    <option value="84">Last 84 Weeks</option><option value="88">Last 88 Weeks</option>
+    <option value="92">Last 92 Weeks</option><option value="96">Last 96 Weeks</option>
+    <option value="100">Last 100 Weeks</option>
+  </select><button onclick="closeHistoryModal('pw')" class="modal-close-btn">✕ CLOSE</button></div></div>
+  <div id="modalContent-pw" class="modal-content"></div>
+  <div class="modal-footer">© 2026 FINFOLIO SUITE PROJECTS</div>
+</div>
+
+<div id="historyModal-p2" class="history-modal"><!-- Same structure --></div>
+<div id="historyModal-p4" class="history-modal"><!-- Same structure --></div>
+
+<script>
+// ========== CONSTANTS & STATE ==========
+const BASE_API = "https://script.google.com/macros/s/AKfycbwyr-M_ZzIscNgxJmR_UYHgZqmamn62Np4msDFaCjX9KgyUmyjuzuIYbawBmT0_mw4j/exec?action=calendar&weeks=150";
+const TICKER_API = "https://script.google.com/macros/s/AKfycbymSUZ3cuBP7wZSKkxs8QmjMkKP6q3j-LOW_CVpY3n6Sw1EzsdwPu6yTEkpOmiAJz95/exec?action=ticker";
+
+const GAME_URLS = {
+  playwhe: BASE_API + "&game=P2WHE",
+  pick2: BASE_API + "&game=PIKII",
+  pick4: BASE_API + "&game=PIKIV",
+};
+
+const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const slots = ["MOR", "MID", "NON", "EVE"];
+const today = new Date();
+const todayName = dayNames[today.getDay()];
+
+let gameState = {
+  playwhe: { weeks: [], fullWeeks: [], currentDay: todayName },
+  pick2: { weeks: [], fullWeeks: [], currentDay: todayName },
+  pick4: { weeks: [], fullWeeks: [], currentDay: todayName }
+};
+
+// ========== HELPER FUNCTIONS ==========
+function getSortKey(val) {
+  if (!val || val === "-" || val === "PENDING") return null;
+  let strVal = String(val).trim();
+  let parts = strVal.includes(",") || strVal.includes("/") ? strVal.split(/[,/]/) : strVal.split("");
+  return parts.map(n => n.trim()).filter(n => n !== "").sort((a,b) => a.localeCompare(b, undefined, {numeric: true})).join("|");
+}
+
+function getMatchColor(index) {
+  const colors = ["#00f2ff", "#7c02b5", "#32d74b", "#ff375f", "#ffd60a", "#ff9f0a", "#007aff", "#bf5af2"];
+  return colors[index % colors.length];
+}
+
+function getHitClass(count) {
+  if (count >= 7) return 'hit-7plus';
+  if (count === 6) return 'hit-6';
+  if (count === 5) return 'hit-5';
+  if (count === 4) return 'hit-4';
+  if (count === 3) return 'hit-3';
+  if (count === 2) return 'hit-2';
+  if (count === 1) return 'hit-1';
+  return 'hit-0';
+}
+
+// ========== BUILD DAY TO DAY TABLE ==========
+function buildDayToDayTable(weeks, gameType, currentGame) {
+  const isPickGame = (gameType === "PIKII" || gameType === "PIKIV");
+  let drawCounts = {}, colorMap = {}, colorIndex = 0;
+  const timeOrder = ["MOR", "MID", "NON", "EVE"];
+  
+  if (isPickGame) {
+    weeks.forEach(wk => wk.days.forEach(d => timeOrder.forEach(s => {
+      let key = getSortKey(d.draws[s]);
+      if (key) drawCounts[key] = (drawCounts[key] || 0) + 1;
+    })));
+    Object.keys(drawCounts).forEach(key => { 
+      if (drawCounts[key] > 1) { 
+        colorMap[key] = getMatchColor(colorIndex); 
+        colorIndex++; 
+      } 
+    });
+  }
+  
+  // Determine highlight day
+  let isAfterEvening = false;
+  const currentWeekData = weeks.find(wk => wk.isCurrentWeek);
+  if (currentWeekData) {
+    const todayData = currentWeekData.days.find(d => d.dayName === todayName);
+    if (todayData && todayData.draws.EVE !== "-" && todayData.draws.EVE !== "PENDING") isAfterEvening = true;
+  }
+  let highlightDayName = isAfterEvening ? dayNames[(today.getDay() + 1) % 7] : todayName;
+  
+  // Also highlight same day in previous week
+  let previousWeekData = weeks.find(wk => !wk.isCurrentWeek);
+  
+  return weeks.map(wk => `
+    <div class="table-wrapper">
+      <div class="table-header"><span>${wk.isCurrentWeek ? "📅 CURRENT WEEK" : "📆 PREVIOUS WEEK"}</span></div>
+      <table>
+        <thead><tr><th>DAY</th><th>MOR</th><th>MID</th><th>NON</th><th>EVE</th></tr></thead>
+        <tbody>
+          ${wk.days.map(d => {
+            let isHighlighted = (d.dayName === highlightDayName);
+            return `<tr class="${isHighlighted ? 'current-day' : ''}">
+              <td class="day-label">${(isHighlighted && isAfterEvening && wk.isCurrentWeek) ? "▶ " : ""}${d.dayName.slice(0,3).toUpperCase()}</td>
+              ${timeOrder.map(s => {
+                let val = d.draws[s];
+                let key = getSortKey(val);
+                let matchColor = isPickGame ? colorMap[key] : null;
+                let style = matchColor ? `style="color:${matchColor}; border:1px solid ${matchColor}; background:${matchColor}15; border-radius:4px;"` : "";
+                let displayVal = (!val || val === "-" || val === "PENDING") ? "⏳" : val;
+                return `<td ${style}>${displayVal}</td>`;
+              }).join("")}
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+}
+
+// ========== RENDER HEAT GRID ==========
+function renderHeatGrid(drawCounts, totalHits) {
+  let html = '';
+  for (let i = 1; i <= 36; i++) {
+    const count = drawCounts[i] || 0;
+    const percent = totalHits > 0 ? Math.round((count / totalHits) * 100) : 0;
+    html += `<div class="heat-cell ${getHitClass(count)}">
+              ${i}<span class="heat-small">${percent}%</span>
+            </div>`;
+  }
+  return html;
+}
+
+// ========== RENDER LS CHART ==========
+function renderLSChart(title, type, data, stats, totalHits, totalNumbers) {
+  return `
+    <div class="table-wrapper">
+      <div class="table-header"><span>${title}</span></div>
+      <table class="ls-table">
+        <tbody>
+          ${Object.entries(data).map(([key, nums]) => {
+            const count = stats[key] || 0;
+            const percent = totalHits > 0 ? Math.round((count / totalHits) * 100) : 0;
+            return `<tr>
+              <td class="ls-label">${type}${key}</td>
+              <td class="ls-count">${count} (${percent}%)</td>
+              <td>${nums.join(', ')}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ========== MAIN RENDER FUNCTION ==========
+async function renderGameUI(game) {
+  const container = document.getElementById(`${game}-content`);
+  const gameKey = game === 'pw' ? 'playwhe' : game === 'p2' ? 'pick2' : 'pick4';
+  const weeks = gameState[gameKey].weeks;
+  
+  if (!weeks || weeks.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:40px;">Loading...</div>';
+    return;
+  }
+  
+  const gameType = game === 'pw' ? "P2WHE" : game === 'p2' ? "PIKII" : "PIKIV";
+  const isPickGame = (gameType === "PIKII" || gameType === "PIKIV");
+  
+  // Calculate statistics
+  let drawCounts = {};
+  let totalHits = 0;
+  const lines = {1:[1,10,19,28],2:[2,11,20,29],3:[3,12,21,30],4:[4,13,22,31],5:[5,14,23,32],6:[6,15,24,33],7:[7,16,25,34],8:[8,17,26,35],9:[9,18,27,36]};
+  const suites = {0:[10,20,30],1:[1,11,21,31],2:[2,12,22,32],3:[3,13,23,33],4:[4,14,24,34],5:[5,15,25,35],6:[6,16,26,36],7:[7,17,27],8:[8,18,28],9:[9,19,29]};
+  let lineStats = {}, suiteStats = {};
+  
+  // Collect all draws
+  const allDraws = [];
+  weeks.forEach(week => {
+    week.days.forEach(day => {
+      slots.forEach(slot => {
+        const val = day.draws[slot];
+        if (val && val !== "-" && val !== "PENDING") {
+          if (game === 'pw') {
+            const num = parseInt(val);
+            if (!isNaN(num)) allDraws.push(num);
+          } else if (game === 'p2') {
+            const nums = val.toString().split(/[,\/]/).map(n => parseInt(n.trim()));
+            nums.forEach(n => { if (!isNaN(n)) allDraws.push(n); });
+          } else if (game === 'p4') {
+            const digits = val.toString().split('').map(d => parseInt(d));
+            digits.forEach(d => { if (!isNaN(d)) allDraws.push(d); });
+          }
+        }
+      });
+    });
+  });
+  
+  // Count frequencies
+  allDraws.forEach(num => { drawCounts[num] = (drawCounts[num] || 0) + 1; totalHits++; });
+  
+  // Calculate line/suite stats
+  for (let i = 1; i <= 36; i++) {
+    for (let [line, nums] of Object.entries(lines)) {
+      if (nums.includes(i)) lineStats[line] = (lineStats[line] || 0) + (drawCounts[i] || 0);
+    }
+    for (let [suite, nums] of Object.entries(suites)) {
+      if (nums.includes(i)) suiteStats[suite] = (suiteStats[suite] || 0) + (drawCounts[i] || 0);
+    }
+  }
+  
+  // Calculate cycle numbers
+  const uniqueDraws = Object.keys(drawCounts).filter(k => drawCounts[k] > 0).length;
+  const cycleNum = Math.floor(uniqueDraws / 10) + 1;
+  const startHeader = weeks[weeks.length-1]?.startDate?.split(' ')[0] || "Week";
+  
+  // Build the complete UI
+  let html = `
+    ${buildDayToDayTable(weeks.slice(-2), gameType, game)}
+    <div class="table-wrapper">
+      <div class="table-header"><span>🔥 HEAT GRID • ${uniqueDraws}/36 numbers hit • Cycle ${cycleNum}</span></div>
+      <div class="heat-grid">${renderHeatGrid(drawCounts, totalHits)}</div>
+    </div>
+    ${renderLSChart(`LINES (${startHeader} — PRESENT) • Cycle ${cycleNum} • ${uniqueDraws}/36`, "L", lines, lineStats, totalHits, uniqueDraws)}
+    ${renderLSChart(`SUITES (${startHeader} — PRESENT) • Cycle ${cycleNum} • ${uniqueDraws}/36`, "S", suites, suiteStats, totalHits, uniqueDraws)}
+  `;
+  
+  container.innerHTML = html;
+  
+  // Make headers clickable for modal
+  document.querySelectorAll('#pw-tab .table-header, #p2-tab .table-header, #p4-tab .table-header').forEach(header => {
+    header.style.cursor = 'pointer';
+    header.onclick = () => openHistoryModal(game);
+  });
+}
+
+// ========== DATA LOADING ==========
+async function loadAllGames() {
+  try {
+    const [pwData, p2Data, p4Data] = await Promise.all([
+      fetch(GAME_URLS.playwhe + "&_t=" + Date.now()).then(r => r.json()),
+      fetch(GAME_URLS.pick2 + "&_t=" + Date.now()).then(r => r.json()),
+      fetch(GAME_URLS.pick4 + "&_t=" + Date.now()).then(r => r.json()),
+    ]);
+    
+    gameState.playwhe.fullWeeks = pwData.data.weeks.reverse();
+    gameState.pick2.fullWeeks = p2Data.data.weeks.reverse();
+    gameState.pick4.fullWeeks = p4Data.data.weeks.reverse();
+    
+    // Use last 8 weeks for display
+    gameState.playwhe.weeks = gameState.playwhe.fullWeeks.slice(0, 8);
+    gameState.pick2.weeks = gameState.pick2.fullWeeks.slice(0, 8);
+    gameState.pick4.weeks = gameState.pick4.fullWeeks.slice(0, 8);
+    
+    await renderGameUI('pw');
+    await renderGameUI('p2');
+    await renderGameUI('p4');
+    
+    console.log("All games loaded");
+  } catch (error) {
+    console.error("Error loading games:", error);
+  }
+}
+
+// ========== MODAL FUNCTIONS (keep your existing renderExportTable) ==========
+// ... (insert your existing renderExportTable and chart functions here)
+// Note: Keep all your existing modal and chart functions exactly as they were
+
+// ========== UI HELPERS ==========
+function switchTab(tab, el) {
+  document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`${tab}-tab`).classList.add('active');
+  el.classList.add('active');
+}
+
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  const btn = document.querySelector('.theme-btn');
+  btn.innerText = document.body.classList.contains('light-mode') ? '☀️' : '🌓';
+}
+
+function openHistoryModal(game) {
+  const modal = document.getElementById(`historyModal-${game}`);
+  if (modal) {
+    modal.style.display = 'block';
+    renderExportTable(game);
+  }
+}
+
+function closeHistoryModal(game) {
+  document.getElementById(`historyModal-${game}`).style.display = 'none';
+}
+
+// ========== INITIALIZATION ==========
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadAllGames();
+  
+  // Add modal styles if not present
+  const modalStyle = document.createElement('style');
+  modalStyle.textContent = `
+    .history-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #f4f4f7;
+      z-index: 2000;
+      overflow: auto;
+      color: #030202;
+      padding: 25px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #007AFF;
+      padding-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .modal-header h2 { color: #007AFF; font-size: 18px; margin: 0; }
+    .modal-controls { display: flex; gap: 9px; align-items: center; }
+    .modal-select { background: white; color: black; border: 1px solid #ccc; padding: 8px; border-radius: 8px; }
+    .modal-close-btn { background: #ff453a; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .modal-content { overflow-x: auto; }
+    .export-table { width: 100%; border-collapse: collapse; background: white; color: black; font-size: 10px; }
+    .export-table th, .export-table td { border: 1px solid #ddd; padding: 4px; text-align: center; }
+  `;
+  document.head.appendChild(modalStyle);
+});
+</script>
+</body>
+</html>

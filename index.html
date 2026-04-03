@@ -488,6 +488,7 @@ function renderLSChart(title, labelPrefix, groups, stats, hitData, totalDraws, m
 }
 
 // ========== RENDER COMPLETE GAME UI ==========
+// ========== RENDER COMPLETE GAME UI ==========
 async function renderGameUI(game) {
   const container = document.getElementById(`${game}-container`);
   const gameKey = game === 'pw' ? 'playwhe' : game === 'p2' ? 'pick2' : 'pick4';
@@ -500,84 +501,8 @@ async function renderGameUI(game) {
   
   const gameType = game === 'pw' ? "P2WHE" : game === 'p2' ? "PIKII" : "PIKIV";
   
-  // Calculate statistics from all weeks
-  let drawCounts = {};
-  let totalHits = 0;
-  let timeline = [];
-  const lines = {1:[1,10,19,28],2:[2,11,20,29],3:[3,12,21,30],4:[4,13,22,31],5:[5,14,23,32],6:[6,15,24,33],7:[7,16,25,34],8:[8,17,26,35],9:[9,18,27,36]};
-  const suites = {0:[10,20,30],1:[1,11,21,31],2:[2,12,22,32],3:[3,13,23,33],4:[4,14,24,34],5:[5,15,25,35],6:[6,16,26,36],7:[7,17,27],8:[8,18,28],9:[9,19,29]};
-  let lineStats = {}, suiteStats = {};
-  
-  // Collect all draws from all weeks
-  weeks.forEach(week => {
-    week.days.forEach(day => {
-      slots.forEach(slot => {
-        const val = day.draws[slot];
-        if (val && val !== "-" && val !== "PENDING") {
-          if (game === 'pw') {
-            const num = parseInt(val);
-            if (!isNaN(num)) {
-              timeline.push({ n: num, date: week.startDate });
-              drawCounts[num] = (drawCounts[num] || 0) + 1;
-              totalHits++;
-            }
-          } else if (game === 'p2') {
-            const nums = val.toString().split(/[,\/]/).map(n => parseInt(n.trim()));
-            nums.forEach(n => {
-              if (!isNaN(n)) {
-                timeline.push({ n: n, date: week.startDate });
-                drawCounts[n] = (drawCounts[n] || 0) + 1;
-                totalHits++;
-              }
-            });
-          } else if (game === 'p4') {
-            const digits = val.toString().split('').map(d => parseInt(d));
-            digits.forEach(d => {
-              if (!isNaN(d)) {
-                timeline.push({ n: d, date: week.startDate });
-                drawCounts[d] = (drawCounts[d] || 0) + 1;
-                totalHits++;
-              }
-            });
-          }
-        }
-      });
-    });
-  });
-  
-  // Calculate gaps
-  let gaps = {};
-  for (let n = 1; n <= 36; n++) {
-    let lastIdx = timeline.map(x => x.n).lastIndexOf(n);
-    gaps[n] = lastIdx === -1 ? timeline.length : (timeline.length - 1) - lastIdx;
-  }
-  
-  // Calculate line/suite stats
-  for (let [line, nums] of Object.entries(lines)) {
-    lineStats[line] = nums.reduce((sum, num) => sum + (drawCounts[num] || 0), 0);
-  }
-  for (let [suite, nums] of Object.entries(suites)) {
-    suiteStats[suite] = nums.reduce((sum, num) => sum + (drawCounts[num] || 0), 0);
-  }
-  
-  // Find missing numbers
-  let missingNumbers = [];
-  for (let n = 1; n <= 36; n++) {
-    if (!drawCounts[n]) missingNumbers.push(n);
-  }
-  
-  const uniqueDraws = Object.keys(drawCounts).length;
-  const cycleNum = Math.floor(uniqueDraws / 10) + 1;
-  const startHeader = weeks[0]?.startDate?.split(' ')[0] || "Week";
-  
   let html = `
     ${buildDayToDayTable(weeks.slice(-2), gameType)}
-    <div class="table-wrapper">
-      <div class="table-header"><span>🔥 HEAT GRID • ${uniqueDraws}/36 numbers hit • Cycle ${cycleNum}</span></div>
-      <div class="heat-grid">${renderHeatGrid(drawCounts, totalHits, gaps)}</div>
-    </div>
-    ${renderLSChart(`LINES (${startHeader} — PRESENT) • Cycle ${cycleNum} • ${uniqueDraws}/36`, "L", lines, lineStats, drawCounts, totalHits, missingNumbers)}
-    ${renderLSChart(`SUITES (${startHeader} — PRESENT) • Cycle ${cycleNum} • ${uniqueDraws}/36`, "S", suites, suiteStats, drawCounts, totalHits, missingNumbers)}
   `;
   
   container.innerHTML = html;
